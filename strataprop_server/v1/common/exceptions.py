@@ -1,14 +1,18 @@
 from flask_restful import HTTPException
 
-class UnKnownException(Exception):
-    pass
-
 class BadRequest(HTTPException):
     pass
-class ServerConfigurationError(HTTPException):
-    pass
 
-class RequiredParametersMissingException(HTTPException):
+class DuplicateEntry(HTTPException):
+	pass
+
+class DeviceNotFound(HTTPException):
+	pass
+	
+class InvalidDeviceNameException(HTTPException):
+	pass
+
+class BadRequest(HTTPException):
     pass
 
 class DuplicateEntry(HTTPException):
@@ -29,8 +33,5 @@ class InvalidEmail(HTTPException):
 class EmployeeNotFound(HTTPException):
 	pass
 
-class DeviceNotFound(HTTPException):
+class DeviceNotFree(HTTPException):
 	pass
-class InvalidDeviceNameException(HTTPException):
-	pass
-

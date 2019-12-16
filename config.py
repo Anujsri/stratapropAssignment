@@ -18,14 +18,6 @@ CELERY_QUEUES = {
         'exchange': 'default',
         'binding_key': 'default',
         'routing_key': 'default'
-    },
-    'retry': {
-        'exchange': 'retry',
-        'routing_key': 'retry'
-    },
-    'trigger': {
-        'exchange': 'trigger',
-        'routing_key': 'trigger'
     }
 }
 
@@ -55,7 +47,6 @@ LOGGING = {
         'sentry': {
             'level': 'INFO',
             'class': 'raven.handlers.logging.SentryHandler',
-            # 'dsn': 'https://550053cd21ac437483a2e9351993f13a:d221e97252664bd08b919e2b7a137ec7@sentry.io/1227928',
             'formatter': 'sentry'
         },
     },
@@ -73,8 +64,6 @@ LOGGING = {
 class Config(object):
     MAIL_USERNAME = os.environ['MAIL_USERNAME']
     MAIL_PASSWORD = os.environ['MAIL_PASSWORD']
-    # LOGIN_API = os.environ['LOGIN_API'] if os.environ['LOGIN_API'] and len(os.environ['LOGIN_API']) > 0 else None
-    # LOGGING_API_KEY = os.environ['LOGGING_API_KEY']
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
@@ -101,8 +90,6 @@ class Config(object):
     SQLALCHEMY_POOL_RECYCLE = 300
     CELERY_QUEUES = CELERY_QUEUES
     CELERY_DEFAULT_QUEUE = CELERY_DEFAULT_QUEUE
-    # CELERYBEAT_SCHEDULE = CELERYBEAT_SCHEDULE
-    MANDRILL_API_KEY = '9o68rvv-VGPKBK0uLjOLQg'
 
 
 class ProductionConfig(Config):

@@ -1,19 +1,15 @@
 from flask import request, g
 from flask_restful import Resource
-
 from strataprop_server import app, sentry
-# from strataprop_server.v1.auth.login_decorators import login_required, roles_required
-from strataprop_server.v1.device.user_functions import create_device,update_device,get_device
+from strataprop_server.v1.device.services import create_device,update_device,get_device
 from strataprop_server.v1.status_codes import *
 from strataprop_server.v1.common.exceptions import  *
 
 
 class DeviceAPI(Resource):
-    # method_decorators = [login_required, roles_required(["mis", "manager","tele","tele-manager","tele-source-management"])]
 
     def get(self):
         try:
-            # member = g.user
             device_id = request.args.get('id')
             result, msg, status = get_device(device_id)
             return {"status": OK, "msg": msg, "data": result}, OK
@@ -30,7 +26,6 @@ class DeviceAPI(Resource):
 
 
     def post(self):
-        # member = g.user
         
         try:
             json_data = None
@@ -57,7 +52,6 @@ class DeviceAPI(Resource):
 
     def put(self):
         try:
-            # member = g.user
             json_data = None
             json_data = request.json
             device_id = request.args.get('id')

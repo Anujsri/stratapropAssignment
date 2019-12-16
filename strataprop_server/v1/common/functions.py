@@ -1,118 +1,12 @@
 import uuid
-import json
-import copy
-import requests
-import smtplib
-import pytz
-import re
 import traceback
 from strataprop_server import app
-from strataprop_server.v1.status_codes import UNAUTHORIZED
-from strataprop_server.v1.status_messages import UNAUTHORIZED_VIEW
-from flask import render_template, url_for, jsonify
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from itsdangerous import \
-    BadSignature, \
-    SignatureExpired
-from random import randint
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
+from strataprop_server import celery
 def generate_id():
     return str(uuid.uuid4())
 
-def epoch_timestamp(datetime_object):
-    import datetime
-    if not datetime_object:
-        return None
-    epoch_start = datetime.datetime.strptime('1970-01-01', '%Y-%m-%d')
-    return round(((datetime_object - epoch_start).total_seconds()) * 1000)
-
-
-def convert_to_datetime(epoch, time_zone=None):
-    from datetime import datetime
-    import pytz
-    if not epoch:
-        return None
-    if time_zone:
-        tz = pytz.timezone(time_zone)
-        dt = datetime.fromtimestamp(epoch/1000, tz)
-        naive_dt = dt.astimezone(tz).replace(tzinfo=None)
-        return naive_dt
-    return datetime.fromtimestamp(epoch/1000)
-
-
-def convert_epoch_datetime(epoch_time, time_format="%d-%m-%Y"):
-    try:
-        import datetime
-        return datetime.datetime.fromtimestamp(epoch_time/1000.0).strftime(time_format)
-    except ValueError:
-        import traceback
-        app.logger.warning("Invalid date or time format")
-        app.logger.exception(traceback.print_exc())
-        return ''
-
-
-def generate_random_code(length=6):
-    """
-    Generates a N digit random code.
-    :param length: Random code which need to be generated.
-    :return: random number of N digits.
-    """
-    range_start = 10 ** (length - 1)
-    range_end = (10 ** length) - 1
-    return randint(range_start, range_end)
-
-def generate_auth_token(data, expiration=6000):
-    """
-    generates an auth token from the SECRET_KEY with the given data and expiration time.
-    :param data: data to be added in token.
-    :param expiration: expiration time in seconds.
-    :return: generated token
-    """
-    serializer = Serializer(app.config.get('SECRET_KEY'))
-    return serializer.dumps({
-        'data': data
-    })
-
-
-def verify_auth_token(token):
-    """
-    Verifies the auth token from the SECRET_KEY
-    :param token:
-    :return:
-    """
-    serializer = Serializer(app.config.get('SECRET_KEY'))
-    try:
-        data, header = serializer.loads(token, return_header=True)
-        return data
-    except BadSignature:
-        return None
-    except SignatureExpired:
-        return None
-
-def unauthorized_view():
-    response = jsonify(
-        status=UNAUTHORIZED,
-        msg=UNAUTHORIZED_VIEW
-    )
-    response.status_code = UNAUTHORIZED
-    return response
-
-def is_member_logged_in(member_id):
-    try:
-        from strataprop_server.v1.models.member_tokens import MemberTokens
-        token_record = MemberTokens.query.filter(MemberTokens.member_id == member_id).first()
-        if not token_record:
-            return False
-        return token_record
-    except:
-        app.logger.error(traceback.print_exc())
-        app.logger.error("Reached Exception: is_member_logged_in")
-
-
-def send_mail():
+@celery.task
+def send_mail(name,email,device_name,device_id,message):
     from flask_mail import Mail,Message
     from flask import Flask
     import os
@@ -137,9 +31,9 @@ def send_mail():
     try:
         mail = Mail(app)
 
-        msg = Message("Hello",sender="nujsrivastava@iiitdmj.ac.in",recipients=["anuj96sri@gmail.com"])
-        msg.body = "testing"
-        msg.html = "<b>testing</b>"
+        msg = Message("Update on Your Device",sender="anujsrivastava@iiitdmj.ac.in",recipients=[email])
+        # msg.body = "anuj testing"
+        msg.html = 'Hi ' + name + ',<br>' +  message + '<br><div style="margin-right:-15px;margin-left:-15px;">' + '<div style="position:relative;min-height:1px;padding-right:15px;padding-left:15px;@media (min-width:992px){float:left};width:66.66666667%;margin-left:16.66666667%;margin-right:16.66666667%;" >' +'<div  style="padding-left:0;margin-bottom:20px">' +'<li style="position:relative;display:block;padding:10px 15px;margin-bottom:-1px;background-color:#5499C7;color : white;font-size: 20px;"><center><b>Device Details</b></center></li>' +'<li style="position:relative;display:block;padding:10px 15px;margin-bottom:-1px;background-color:#fff;border:1px solid #AEB6BF"><b>Name : </b>'  + device_name +'</li>' +'<li style="position:relative;display:block;padding:10px 15px;margin-bottom:-1px;background-color:#fff;border:1px solid #AEB6BF"><b>Device Id. :  </b>'  + device_id + '</li>' +'<li style="position:relative;display:block;padding:10px 15px;margin-bottom:-1px;background-color:#fff;border:1px solid #AEB6BF"><b>Diseases Name. :  </b>'  + '</li>' +'</div>' +'</div>' +'</div>'
         mail.send(msg)
     except:
         import traceback
