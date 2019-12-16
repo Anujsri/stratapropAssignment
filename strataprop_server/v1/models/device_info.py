@@ -12,6 +12,7 @@ class DeviceInfo(db.Model):
     created_on = db.Column(db.Float, default=round(time.time() * 1000))
     is_free = db.Column(db.Boolean, default=True)
     employee_id = db.Column(db.String, db.ForeignKey('{}.id'.format(EMPLOYEE_INFO)),nullable=True)
+    model_name = db.Column(db.String)
 
     def __init__(self, *args, **kwargs):
         self.id = kwargs.get('uuid', kwargs.get('id', generate_id()))
@@ -19,4 +20,4 @@ class DeviceInfo(db.Model):
         self.created_on = kwargs.get('created_on')
         self.is_free = kwargs.get('is_free', True)
         self.employee_id = kwargs.get('employee_id')
-
+        self.model_name = kwargs.get('model_name')

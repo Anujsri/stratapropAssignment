@@ -8,13 +8,13 @@ from strataprop_server.v1.common.functions import  check_is_alpha
 from strataprop_server.v1.common.exceptions import  *
 import json
 
-def get_device(device_id=None):
+def get_device(device_id=None,available_devices=None):
     if(device_id):
         device = db.session.query(DeviceInfo).filter(DeviceInfo.id == device_id).first()
         if not device:
             raise DeviceNotFound
         try:
-            data_to_fetch = ['device_name','created_on']
+            data_to_fetch = ['device_name','created_on','model_name']
             device_details = dict()
             for attr in data_to_fetch:
                 if getattr(device, attr):
@@ -33,7 +33,10 @@ def get_device(device_id=None):
             raise BadRequest
     else:
         try:
-            devices = db.session.query(DeviceInfo).all()
+            if available_devices:
+                devices = db.session.query(DeviceInfo).filter(DeviceInfo.is_free.isnot(False)).all()
+            else:
+                devices = db.session.query(DeviceInfo).all()
             result = {}
             result['devices']  = []
             if devices:
@@ -41,6 +44,8 @@ def get_device(device_id=None):
                     d = {}
                     d['device_name'] = device.device_name
                     d['created_on'] = device.created_on
+                    d['model_name'] = device.model_name
+                    d['is_free'] = device.is_free
                     result['devices'].append(d)
             return result['devices'], "", OK
         except:
@@ -88,6 +93,7 @@ def update_device(form_data,device_id):
         raise DeviceNotFound
 
     device_name = form_data.get('device_name')
+    model_name = form_data.get('model_name')
 
     if not device_name:
         raise DeviceNotFound
@@ -96,6 +102,7 @@ def update_device(form_data,device_id):
         raise InvalidDeviceNameException
 
     device.device_name = device_name
+    device.model_name = model_name
 
     try:
         db.session.add(device)
@@ -133,7 +140,7 @@ def assign_device(form_data):
         send_mail.apply_async(
             queue='default',
             routing_key='default',
-            args=[name,emaployee.email,device.device_name,device.id,"You have been assigned with new device"]
+            args=[name,emaployee.email,device.device_name,device.id,device.model_name,"You have been assigned with new device"]
         )
         return "OK", "Device is assigned", OK
     except:
@@ -160,7 +167,6 @@ def unassign_device(form_data):
     device.is_free = True
     device.employee_id = None
 
-    
     try:
         name = emaployee.first_name + " " + emaployee.last_name
         db.session.add(device)
@@ -168,7 +174,7 @@ def unassign_device(form_data):
         send_mail.apply_async(
             queue='default',
             routing_key='default',
-            args=[name,emaployee.email,device.device_name,device.id,"You have been unassigned with a device"]
+            args=[name,emaployee.email,device.device_name,device.id,device.model_name,"You have been unassigned with a device"]
         )
         return "OK", "Device is unassigned", OK
     except:
@@ -177,6 +183,7 @@ def unassign_device(form_data):
         app.logger.error('Unknown Error in Device api'.format(str(traceback.print_exc())))
         sentry.captureException()
         raise BadRequest
+
 
 def assign_details():
     try:
@@ -197,4 +204,6 @@ def assign_details():
         app.logger.error('Unknown Error in Device api'.format(str(traceback.print_exc())))
         sentry.captureException()
         raise BadRequest
+
+
 
