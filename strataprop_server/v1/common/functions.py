@@ -2,8 +2,20 @@ import uuid
 import traceback
 from strataprop_server import app
 from strataprop_server import celery
+from random import randint
+
 def generate_id():
     return str(uuid.uuid4())
+
+def generate_random_code(length=6):
+    """
+    Generates a N digit random code.
+    :param length: Random code which need to be generated.
+    :return: random number of N digits.
+    """
+    range_start = 10 ** (length - 1)
+    range_end = (10 ** length) - 1
+    return randint(range_start, range_end)
 
 @celery.task
 def send_mail(name,email,device_name,device_id,model_name,message):

@@ -13,6 +13,7 @@ class DeviceInfo(db.Model):
     is_free = db.Column(db.Boolean, default=True)
     employee_id = db.Column(db.String, db.ForeignKey('{}.id'.format(EMPLOYEE_INFO)),nullable=True)
     model_name = db.Column(db.String)
+    device_code = db.Column(db.String,unique=True)
 
     def __init__(self, *args, **kwargs):
         self.id = kwargs.get('uuid', kwargs.get('id', generate_id()))
@@ -21,3 +22,4 @@ class DeviceInfo(db.Model):
         self.is_free = kwargs.get('is_free', True)
         self.employee_id = kwargs.get('employee_id')
         self.model_name = kwargs.get('model_name')
+        self.device_code = kwargs.get('device_code')

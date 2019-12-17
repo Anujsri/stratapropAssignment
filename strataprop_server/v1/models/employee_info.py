@@ -13,6 +13,7 @@ class EmployeeInfo(db.Model):
     email = db.Column(db.String,unique=True, nullable=False)
     mobile_number = db.Column(db.String)
     created_on = db.Column(db.Float, default=round(time.time() * 1000))
+    employee_code = db.Column(db.String,unique=True)
     
 
     def __init__(self, *args, **kwargs):
@@ -22,5 +23,6 @@ class EmployeeInfo(db.Model):
         self.email = kwargs.get('email')
         self.created_on = kwargs.get('created_on')
         self.mobile_number = kwargs.get('mobile_number')
+        self.employee_code = kwargs.get('employee_code')
        
 

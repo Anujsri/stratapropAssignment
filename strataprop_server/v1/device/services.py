@@ -8,13 +8,13 @@ from strataprop_server.v1.common.functions import  check_is_alpha
 from strataprop_server.v1.common.exceptions import  *
 import json
 
-def get_device(device_id=None,available_devices=None):
-    if(device_id):
-        device = db.session.query(DeviceInfo).filter(DeviceInfo.id == device_id).first()
+def get_device(device_code=None,available_devices=None):
+    if(device_code):
+        device = db.session.query(DeviceInfo).filter(DeviceInfo.device_code == device_code).first()
         if not device:
             raise DeviceNotFound
         try:
-            data_to_fetch = ['device_name','created_on','model_name']
+            data_to_fetch = ['device_name','created_on','model_name','device_code']
             device_details = dict()
             for attr in data_to_fetch:
                 if getattr(device, attr):
@@ -46,6 +46,7 @@ def get_device(device_id=None,available_devices=None):
                     d['created_on'] = device.created_on
                     d['model_name'] = device.model_name
                     d['is_free'] = device.is_free
+                    d['device_code'] = device.device_code
                     result['devices'].append(d)
             return result['devices'], "", OK
         except:
@@ -57,9 +58,10 @@ def get_device(device_id=None,available_devices=None):
 
 
 def create_device(form_data):
-    from strataprop_server.v1.common.functions import generate_id
+    from strataprop_server.v1.common.functions import generate_id,generate_random_code
 
     device_name = form_data.get('device_name')
+    model_name = form_data.get('model_name')
 
     if not device_name:
         raise DeviceNotFound
@@ -71,9 +73,12 @@ def create_device(form_data):
     if device:
         raise DuplicateEntry
 
+    device_code = generate_random_code()
     device_obj = DeviceInfo(
         uuid = generate_id(),
-        device_name =device_name
+        device_name =device_name,
+        device_code = device_code,
+        model_name = model_name
     )
     try:
         db.session.add(device_obj)
@@ -87,8 +92,8 @@ def create_device(form_data):
         raise BadRequest
 
 
-def update_device(form_data,device_id):
-    device = db.session.query(DeviceInfo).filter(DeviceInfo.id == device_id).first()
+def update_device(form_data,device_code):
+    device = db.session.query(DeviceInfo).filter(DeviceInfo.device_code == device_code).first()
     if not device:
         raise DeviceNotFound
 
@@ -101,8 +106,8 @@ def update_device(form_data,device_id):
     if not check_is_alpha(device_name):
         raise InvalidDeviceNameException
 
-    device.device_name = device_name
-    device.model_name = model_name
+    device.device_name = device_name if device_name else device.device_name
+    device.model_name = model_name if model_name else device.model_name
 
     try:
         db.session.add(device)
@@ -140,7 +145,7 @@ def assign_device(form_data):
         send_mail.apply_async(
             queue='default',
             routing_key='default',
-            args=[name,emaployee.email,device.device_name,device.id,device.model_name,"You have been assigned with new device"]
+            args=[name,emaployee.email,device.device_name,device.device_code,device.model_name,"You have been assigned with new device"]
         )
         return "OK", "Device is assigned", OK
     except:
@@ -174,7 +179,7 @@ def unassign_device(form_data):
         send_mail.apply_async(
             queue='default',
             routing_key='default',
-            args=[name,emaployee.email,device.device_name,device.id,device.model_name,"You have been unassigned with a device"]
+            args=[name,emaployee.email,device.device_name,device.device_code,device.model_name,"You have been unassigned with a device"]
         )
         return "OK", "Device is unassigned", OK
     except:
@@ -195,7 +200,10 @@ def assign_details():
             d['last_name'] = data.EmployeeInfo.last_name
             d['email'] = data.EmployeeInfo.email
             d['mobile_number']  = data.EmployeeInfo.mobile_number
+            d['employee_code'] = data.EmployeeInfo.employee_code
             d['device_name'] = data.DeviceInfo.device_name
+            d['device_code'] = data.DeviceInfo.device_code
+
             result.append(d)
         return result, "", OK
     except:

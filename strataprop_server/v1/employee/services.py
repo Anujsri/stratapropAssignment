@@ -7,13 +7,13 @@ import json
 import re
 from sqlalchemy import func
 
-def get_employee(emaployee_id=None):
-    if(emaployee_id):
-        emaployee = db.session.query(EmployeeInfo).filter(EmployeeInfo.id == emaployee_id).first()
+def get_employee(employee_code=None):
+    if(employee_code):
+        emaployee = db.session.query(EmployeeInfo).filter(EmployeeInfo.employee_code == employee_code).first()
         if not emaployee:
             raise EmployeeNotFound
         try:
-            data_to_fetch = ['first_name', 'last_name', 'email', 'mobile_number','created_on']
+            data_to_fetch = ['first_name', 'last_name', 'email', 'mobile_number','created_on','employee_code']
             employee_details = dict()
             for attr in data_to_fetch:
                 if getattr(emaployee, attr):
@@ -43,6 +43,7 @@ def get_employee(emaployee_id=None):
                     d['email'] = emaployee.email
                     d['mobile_number'] = emaployee.mobile_number
                     d['created_on'] = emaployee.created_on
+                    d['employee_code'] = emaployee.employee_code
                     result['emaployees'].append(d)
             return result['emaployees'], "", OK
         except:
@@ -55,7 +56,7 @@ def get_employee(emaployee_id=None):
 
 
 def create_employee(form_data):
-    from strataprop_server.v1.common.functions import generate_id
+    from strataprop_server.v1.common.functions import generate_id,generate_random_code
 
     first_name = form_data.get('first_name')
     last_name = form_data.get('last_name')
@@ -74,6 +75,8 @@ def create_employee(form_data):
     if not check(email):
         raise InvalidEmail
 
+    employee_code = generate_random_code()
+
     emaployee = db.session.query(EmployeeInfo).filter(EmployeeInfo.email == email).first()
     if emaployee:
         raise DuplicateEntry
@@ -83,7 +86,8 @@ def create_employee(form_data):
         first_name =first_name,
         last_name = last_name,
         mobile_number = mobile_number,
-        email = email
+        email = email,
+        employee_code = employee_code
     )
     try:
         db.session.add(employee_obj)
@@ -97,8 +101,8 @@ def create_employee(form_data):
         raise BadRequest
 
 
-def update_employee(form_data,emaployee_id):
-    emaployee = db.session.query(EmployeeInfo).filter(EmployeeInfo.id == emaployee_id).first()
+def update_employee(form_data,employee_code):
+    emaployee = db.session.query(EmployeeInfo).filter(EmployeeInfo.employee_code == employee_code).first()
     if not emaployee:
         raise EmployeeNotFound
 
@@ -119,10 +123,10 @@ def update_employee(form_data,emaployee_id):
     if not check(email):
         raise InvalidEmail
 
-    emaployee.first_name = first_name
-    emaployee.last_name = last_name
-    emaployee.mobile_number = mobile_number
-    emaployee.email = email
+    emaployee.first_name = first_name if first_name else emaployee.first_name
+    emaployee.last_name = last_name if last_name else emaployee.last_name
+    emaployee.mobile_number = mobile_number if mobile_number else emaployee.mobile_number
+    emaployee.email = email if email else emaployee.email
     try:
         db.session.add(emaployee)
         db.session.commit()
