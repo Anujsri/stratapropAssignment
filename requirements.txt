@@ -29,3 +29,4 @@ sqlalchemy-migrate
 gevent
 ipython
 flask_caching
+raven
