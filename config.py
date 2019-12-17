@@ -6,7 +6,6 @@ from celery.schedules import crontab
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
-SECURITY_EMAIL_SENDER = 'no-reply@loktra.com'
 MAIL_SERVER = 'smtp.gmail.com'
 MAIL_PORT = 465
 MAIL_USE_TLS = False
